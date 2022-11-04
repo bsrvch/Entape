@@ -30,9 +30,15 @@ private List<Student> childrenMother = new ArrayList<>();
 @OneToMany(mappedBy="father")
 private List<Student> childrenFather = new ArrayList<>();
  */
-    public Friends(User user2, User user1) {
+    public Friends(User user1, User user2) {
         this.user2 = user2;
         this.user1 = user1;
+    }
+    public Friends(User user1, User user2, boolean userSuc1,boolean userSuc2) {
+        this.user2 = user2;
+        this.user1 = user1;
+        this.userSuc2 = userSuc2;
+        this.userSuc1 = userSuc1;
     }
 
     public Long getId() {

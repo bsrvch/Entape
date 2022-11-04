@@ -43,11 +43,9 @@ public class User implements UserDetails {
     public User() {}
     public void addNotify(Notify notify) {
         notifies.add(notify);
-        notify.setUser(this);
     }
     public void removeNotify(Notify notify) {
         notifies.remove(notify);
-        notify.setUser(null);
     }
     public void addFriends(Friends friend) {
         friends1.add(friend);
@@ -74,12 +72,12 @@ public class User implements UserDetails {
     public List<Notify> getNotify() {return notifies;}
     public void setNotify(List<Notify> notifies) {this.notifies = notifies;}
     public List<Friends> getFriends() {
-        for(Friends friend: friends2){
-            User user = friend.getUser1();
-            friend.setUser1(friend.getUser2());
-            friend.setUser2(user);
+        List<Friends> friends = new ArrayList<>(friends1);
+        for(Friends fr: friends2){
+            Friends friend = new Friends(fr.getUser2(),fr.getUser1(),fr.isUserSuc2(),fr.isUserSuc1());
+            friends.add(friend);
         }
-        return Stream.concat(friends1.stream(), friends2.stream()).toList();
+        return friends;
     }
     public void setFriends(List<Friends> friends) {this.friends1 = friends;}
     public String getPassword() {

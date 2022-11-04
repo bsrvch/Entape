@@ -103,7 +103,7 @@ public class MainController {
     @PostMapping(path = "/{login}", params = "add")
     public String entapeAddFriend(@RequestParam String add,@AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
         UserInfo friend = userInfoRepository.findByLogin(login);
-        Friends friends = new Friends(friend.getUser(),user);
+        Friends friends = new Friends(user,friend.getUser());
         Hibernate.initialize(user.getFriends());
         user.addFriends(friends);
         Hibernate.initialize(user.getNotify());

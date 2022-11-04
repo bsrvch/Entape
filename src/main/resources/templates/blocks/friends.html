@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <title>Title</title>
+</head>
+<body>
+<div class="users">
+    <button onclick="open_page('../add_friend')">Добавить друзей</button>
+    <div th:if="${friends!=null}"  th:each="el : ${friends}">
+        <button th:attr="onclick=|open_page('../${el.getUser2().getUserInfo().getLogin()}')|" th:text="${el.getUser2().getUserInfo().getFirst_name()}+' '+${el.getUser2().getUserInfo().getSecond_name}"></button>
+    </div>
+</div>
+</body>
+</html>

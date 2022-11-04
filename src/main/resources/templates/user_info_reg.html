@@ -1,0 +1,17 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main</title>
+</head>
+<body>
+  <h1>Добро пожаовать в Entape!</h1>
+  <form action="/user_info_reg" method="post">
+    <label>Введите Имя <input type="text" name="first_name"> </label><br>
+    <label>Введите Фамилию <input type="text" name="second_name"> </label><br>
+    <label>Придумайте уникальный логин <input type="text" name="login"> </label><br>
+    <label>Введите Почту <input type="email" name="email"> </label><br>
+    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+    <input type="submit" value="Начать работу"/><br>
+  </form>
+</body>
+</html>

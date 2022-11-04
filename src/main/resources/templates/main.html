@@ -1,9 +1,47 @@
-<html lang="en">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8">
-  <title>Main</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <meta charset="UTF-8">
+  <title>Авторизация</title>
+  <script type="text/javascript" th:src="@{lib/jquery-3.6.1.min.js}"></script>
+  <script type="text/javascript" th:src="@{lib/jquery.history.js}"></script>
 </head>
 <body>
-  <div ></div>
+  <div class="menu">
+    <ul>
+      <li><button th:attr="onclick=|open_page('../${userInfo.getLogin()}')|">Моя страница</button></li>
+      <li><button onclick="open_page('../tape')">Лента</button></li>
+      <li><button onclick="open_page('../notify')">Уведомления</button></li>
+      <li><button onclick="open_page('../friends')">Друзья</button></li>
+      <li><button onclick="open_page()">Сообщения</button></li>
+    </ul>
+    <form action="/logout" method="post">
+      <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+      <input type="submit" value="Sign out">
+    </form>
+  </div>
+  <div class="content"></div>
+  <script th:inline="javascript">
+    elem = '.content'
+    $(elem).html("loading..");
+    if([[${page}]]!=null){
+      $(elem).load([[${page}]],'lol=123');
+      History.pushState(null, document.title, [[${page}]]);
+    }
+    else{
+      $(elem).load('tape','lol=123');
+      History.pushState(null, document.title, 'tape');
+    }
+    function open_page(url){
+      History.pushState(null, document.title, url);
+    }
+    History.Adapter.bind(window, 'statechange',function(e){
+      $(elem).html("loading..");
+      $(elem).load(History.getState().url,'lol=123');
+    });
+
+  </script>
 </body>
 </html>

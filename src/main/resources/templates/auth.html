@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Авторизация</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css">
+    <font style="vertical-align: inherit;"><font style="vertical-align: inherit;"><script src=https://code.jquery.com/jquery-3.6.1.min.js></script></font></font>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
-<form action="/logout" method="post">
-    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-    <input type="submit" value="Sign out">
 
-</form>
+
     <a href="/login">Войти в систему</a>
-Add new user
+Add new user<br>
+<div class="users"></div>
+    <button onclick="fin()">214635</button>
+<script>
+    elems = document.querySelector(".users")
+    function fin(){
+        $("body").load("/by/bsrvch");
+        window.history.pushState(null, null, '/by/bsrvch');
+    }
+    function processAjaxData(response, urlPath){
+        document.getElementById("content").innerHTML = response.html;
+        document.title = response.pageTitle;
+        window.history.pushState({"html":response.html,"pageTitle":response.pageTitle},"", urlPath);
+    }
+</script>
 </body>
 </html>

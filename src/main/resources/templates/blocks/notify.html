@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+  Уведомления
+  <div>
+    <div th:if="${notifies!=null}"  th:each="el : ${notifies}">
+      <div><h1 th:text="${el.getName()}"></h1><div th:utext="${el.getText()}"></div></div>
+    </div>
+  </div>
+</body>
+</html>

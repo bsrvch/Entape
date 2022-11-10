@@ -1,23 +1,18 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta name="_csrf" th:content="${_csrf.token}"/>
-  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <meta charset="UTF-8">
   <title>Title</title>
 </head>
 <body>
 <div class="users">
   <div th:each="us : ${users}">
-    <button th:if="${!friends.equals(us)}" th:attr="onclick=|doAjaxPost('../${us.getLogin()}','${us.getLogin()}',this)|" th:text="${us.getFirst_name()} + ' ' + ${us.getSecond_name()}"></button>
+    <button th:if="${!friends.equals(us)}" th:attr="onclick=|addFriend('../${us.getLogin()}','${us.getLogin()}',this)|" th:text="${us.getFirst_name()} + ' ' + ${us.getSecond_name()}"></button>
     <button style="background-color: red" th:unless="${!friends.equals(us)}" th:text="${us.getFirst_name()} + ' ' + ${us.getSecond_name()}"></button>
   </div>
 </div>
 
 <script>
-
-
-
   $(function () {
     var token = $("meta[name='_csrf']").attr("content");
     var header = $("meta[name='_csrf_header']").attr("content");
@@ -25,7 +20,7 @@
       xhr.setRequestHeader(header, token);
     });
   });
-  function doAjaxPost(url,login,e) {
+  function addFriend(url,login,e) {
     $.ajax({
       url: url,
       type: "POST",

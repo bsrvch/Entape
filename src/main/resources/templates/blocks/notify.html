@@ -7,9 +7,49 @@
 <body>
   Уведомления
   <div>
-    <div th:if="${notifies!=null}"  th:each="el : ${notifies}">
-      <div><h1 th:text="${el.getName()}"></h1><div th:utext="${el.getText()}"></div></div>
+    <div th:if="${notifies!=null}"  th:each="notify : ${notifies}">
+      <div th:utext="${notify}"></div>
     </div>
   </div>
+  <script>
+    $(function () {
+      var token = $("meta[name='_csrf']").attr("content");
+      var header = $("meta[name='_csrf_header']").attr("content");
+      $(document).ajaxSend(function(e, xhr, options) {
+        xhr.setRequestHeader(header, token);
+      });
+    });
+    function addFriend(url,login,e) {
+      $.ajax({
+        url: url,
+        type: "POST",
+        data: ({
+          add : login,
+        }),
+        success:function(response) {
+          e.style.backgroundColor="red";
+        },
+        error: function (request, status, error) {
+          console.log(request.responseText);
+        }
+      });
+    }
+    function deleteNotify(url,id,e) {
+      $.ajax({
+        url: url,
+        type: "POST",
+        data: ({
+          del : id,
+        }),
+        success:function(response) {
+          e.parentElement.remove();
+        },
+        error: function (request, status, error) {
+          console.log(request.responseText);
+        }
+      });
+
+    }
+  </script>
 </body>
 </html>

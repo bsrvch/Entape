@@ -1,21 +1,17 @@
 package com.bsrvch.entape.controller;
 
-import com.bsrvch.entape.models.Friends;
-import com.bsrvch.entape.models.Notify;
-import com.bsrvch.entape.models.User;
-import com.bsrvch.entape.models.UserInfo;
-import com.bsrvch.entape.repository.UserInfoRepository;
-import com.bsrvch.entape.repository.UserRepository;
-import org.hibernate.Hibernate;
+import com.bsrvch.entape.models.*;
+import com.bsrvch.entape.repository.*;
+import com.bsrvch.entape.utils.NotifyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Controller
 public class MainController {
@@ -23,6 +19,14 @@ public class MainController {
     private UserInfoRepository userInfoRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private FriendsRepository friendsRepository;
+    @Autowired
+    private NotifyRepository notifyRepository;
+    @Autowired
+    private MessagesRepository messagesRepository;
+    @Autowired
+    private RoomsRepository roomsRepository;
     @GetMapping("/")
     public String entapeMain(@AuthenticationPrincipal User user,Model model) {
         ResourceBundle s = ResourceBundle.getBundle("locale/auth",Locale.getDefault());
@@ -40,6 +44,12 @@ public class MainController {
     public String entapeFriends(@AuthenticationPrincipal User user, Model model) {
         model.addAttribute("userInfo", user.getUserInfo());
         model.addAttribute("page","friends");
+        return "main";
+    }
+    @GetMapping("/letters")
+    public String entapeLetters(@AuthenticationPrincipal User user, Model model) {
+        model.addAttribute("userInfo", user.getUserInfo());
+        model.addAttribute("page","letters");
         return "main";
     }
     @GetMapping("/add_friend")
@@ -60,6 +70,12 @@ public class MainController {
         model.addAttribute("page",login);
         return "main";
     }
+    @GetMapping(path = "/{login}/dialog")
+    public String entapeUserDialog(@AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
+        model.addAttribute("userInfo", user.getUserInfo());
+        model.addAttribute("page",login+ "/dialog");
+        return "main";
+    }
     @GetMapping(path = "/tape",params = "lol")
     public String entapeTape(@RequestParam String lol,@AuthenticationPrincipal User user,Model model) {
         return "blocks/tape";
@@ -67,14 +83,19 @@ public class MainController {
     @GetMapping(path= "/friends",params = "lol")
     public String entapeFriends(@RequestParam String lol,@AuthenticationPrincipal User user, Model model) {
         if(user.getFriends()!=null){
+            user.updateFriends(friendsRepository);
             model.addAttribute("friends",user.getFriends().iterator());
         }
         return "blocks/friends";
     }
+    @GetMapping(path= "/letters",params = "lol")
+    public String entapeLetters(@RequestParam String lol,@AuthenticationPrincipal User user, Model model) {
+        //создать таблицу room типа комната как диалог и привязать к ней сообщения!!!!
+        return "blocks/letters";
+    }
     @GetMapping(path= "/add_friend",params = "lol")
     public String entapeAddFriends(@RequestParam String lol,@AuthenticationPrincipal User user, Model model) {
         Iterable<UserInfo> users = userInfoRepository.findAll();
-        Map<Long,String> friends_map = user.getUserInfo().getFriends();
         List<Friends> userFriends = user.getFriends();
         List<UserInfo> friends = new ArrayList<UserInfo>();
         userFriends.iterator().forEachRemaining((friend)-> friends.add(friend.getUser1().getUserInfo()));
@@ -82,14 +103,27 @@ public class MainController {
         model.addAttribute("friends",friends);
         return "blocks/add_friend";
     }
-
+    //@Transactional
     @GetMapping(path= "/notify",params = "lol")
     public String entapeNotify(@RequestParam String lol,@AuthenticationPrincipal User user, Model model) {
-
-
-
-        model.addAttribute("notifies", user.getNotify().iterator());
+        user.updateNotify(notifyRepository);
+        List<Notify> notifies = user.getNotify();
+        List<String> model_notifies = new ArrayList<>();
+        for(Notify notify: notifies){
+            if(notify.getType().equals("friend_req")){
+                if(userInfoRepository.findByLogin(notify.getText())!=null){
+                    model_notifies.add(new NotifyUtils().friend_req(notify,userInfoRepository.findByLogin(notify.getText())));
+                }
+            }
+        }
+        model.addAttribute("notifies", model_notifies.iterator());
         return "blocks/notify";
+    }
+    @PostMapping(path= "/notify",params = "del")
+    public String entapeNotifyDelete(@RequestParam String del,@AuthenticationPrincipal User user, Model model) {
+        notifyRepository.deleteById(Long.valueOf(del));
+        user.updateNotify(notifyRepository);
+        return "redirect:/friends";
     }
     @GetMapping(path = "/{login}", params = "lol")
     public String entapeLoadUser(@RequestParam String lol,@AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
@@ -97,20 +131,63 @@ public class MainController {
             model.addAttribute("my_account","Моя страница");
         }
         UserInfo userInfo = userInfoRepository.findByLogin(login);
-        model.addAttribute("userInfo", userInfo);
+        model.addAttribute("userInfo1", userInfo);
         return "by_user";
     }
+    @GetMapping(path = "/{login}/dialog", params = "lol")
+    public String entapeUserDialog(@RequestParam String lol,@AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(userInfoRepository.findByLogin(login).getUser());
+        if(roomsRepository.findByUsersIn(users)!=null){
+            model.addAttribute("messages",roomsRepository.findByUsersIn(users).getMessages());
+        }
+        UserInfo userInfo = userInfoRepository.findByLogin(login);
+        model.addAttribute("userInfo1", userInfo);
+        model.addAttribute("userInfo", user.getUserInfo());
+        return "blocks/dialog";
+    }
+//    @GetMapping(path = "/{login}/dialog", params = "lol")
+//    public String entapeUserDialog(@RequestParam String lol,@AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
+//        user.updateMessages(messagesRepository);
+//        User friend = userInfoRepository.findByLogin(login).getUser();
+//        List<Messages> messages = new ArrayList<>(Stream.concat(messagesRepository.findAllByUser1AndUser2(user,friend).stream(), messagesRepository.findAllByUser1AndUser2(friend,user).stream()).toList());
+//        if(messages!=null){
+//            messages.sort(new Comparator<Messages>() {
+//                              @Override
+//                              public int compare(Messages lhs, Messages rhs) {
+//                                  return Long.compare(lhs.getId(), rhs.getId());
+//                              }
+//                          }
+//            );
+//            model.addAttribute("messages", messages);
+//        }
+//        UserInfo userInfo = userInfoRepository.findByLogin(login);
+//        model.addAttribute("userInfo1", userInfo);
+//        model.addAttribute("userInfo", user.getUserInfo());
+//        return "blocks/dialog";
+//    }
     @PostMapping(path = "/{login}", params = "add")
     public String entapeAddFriend(@RequestParam String add,@AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
         UserInfo friend = userInfoRepository.findByLogin(login);
+        if(friendsRepository.findByUser1AndUser2(user,friend.getUser())!=null){
+            return "redirect:/friends";
+        }
+        else if(friendsRepository.findByUser1AndUser2(friend.getUser(),user)!=null){
+            Friends fre = friendsRepository.findByUser1AndUser2(friend.getUser(),user);
+            fre.setUserSuc2(true);
+            System.out.println(fre.isUserSuc1()+"  "+fre.isUserSuc2());
+            friendsRepository.save(fre);
+            return "redirect:/friends";
+        }
         Friends friends = new Friends(user,friend.getUser());
-        Hibernate.initialize(user.getFriends());
+        friends.setUserSuc1(true);
         user.addFriends(friends);
-        Hibernate.initialize(user.getNotify());
-        String gg = "<button onclick=\"open_page('../"+user.getUserInfo().getLogin()+"')\">"+user.getUserInfo().getFirst_name()+" "+user.getUserInfo().getSecond_name()+"   </button><button>Добавить</button>";
-        Notify notify = new Notify("friend_req","Запрос в друзья", gg,friend.getUser());
-        user.addNotify(notify);
         userRepository.save(user);
+        Notify notify = new Notify("friend_req","Запрос в друзья", user.getUserInfo().getLogin(),friend.getUser());
+        friend.getUser().addNotify(notify);
+        userRepository.save(friend.getUser());
+
         return "redirect:/friends";
     }
     @PostMapping("/{login}")
@@ -121,6 +198,17 @@ public class MainController {
             mp.put(value.getId(), new String[]{value.getFirst_name(), value.getSecond_name(), value.getLogin()});
         }
         return mp;
+    }
+    @PostMapping(path = "/update")
+    public @ResponseBody String updateEntape(@AuthenticationPrincipal User user){
+        if(user.getNotify().size()!=notifyRepository.findAllByUser(user).size()){
+            return "notify";
+        }
+
+//        if(user.getReceivedMessages().size()!=messagesRepository.findAllByUser2(user).size()){
+//            return "letters";
+//        }
+        return "none";
     }
 //    public @ResponseBody UserInfo deleteKp(@ModelAttribute(value = "userId") String userId, BindingResult result) {
 //        Iterable<UserInfo> us = userInfoRepository.findAll();

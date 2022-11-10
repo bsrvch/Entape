@@ -1,26 +1,22 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" >
 <head>
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <!-- default header name is X-CSRF-TOKEN -->
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-
     <meta charset="UTF-8">
     <title>Title</title>
-    <font style="vertical-align: inherit;"><font style="vertical-align: inherit;"><script src=https://code.jquery.com/jquery-3.6.1.min.js></script></font></font>
 
 </head>
 <body>
-
-
     <h1 th:if="${my_account!=null}" th:text="${my_account}"></h1>
-    <h1 th:text="${userInfo.getFirst_name()} +' '+ ${userInfo.getSecond_name()}"></h1>
-    <button onclick="doAjaxPost()" >1234</button>
-    <div class="users">
-
-    </div>
+    <h1 th:text="${userInfo1.getFirst_name()} +' '+ ${userInfo1.getSecond_name()}"></h1>
     <script th:inline="javascript">
-
+        $(function () {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+            $(document).ajaxSend(function(e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+        });
     </script>
+    <button th:attr="onclick=|open_page('../${userInfo1.getLogin()}/dialog')|"> </button>
 </body>
 </html>

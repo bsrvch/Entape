@@ -5,8 +5,8 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <meta charset="UTF-8">
   <title>Авторизация</title>
-  <script type="text/javascript" th:src="@{lib/jquery-3.6.1.min.js}"></script>
-  <script type="text/javascript" th:src="@{lib/jquery.history.js}"></script>
+  <script type="text/javascript" th:src="@{../lib/jquery-3.6.1.min.js}"></script>
+  <script type="text/javascript" th:src="@{../lib/jquery.history.js}"></script>
 </head>
 <body>
   <div class="menu">
@@ -15,7 +15,7 @@
       <li><button onclick="open_page('../tape')">Лента</button></li>
       <li><button onclick="open_page('../notify')">Уведомления</button></li>
       <li><button onclick="open_page('../friends')">Друзья</button></li>
-      <li><button onclick="open_page()">Сообщения</button></li>
+      <li><button onclick="open_page('../letters')">Сообщения</button></li>
     </ul>
     <form action="/logout" method="post">
       <input type="hidden" name="_csrf" th:value="${_csrf.token}">
@@ -23,16 +23,26 @@
     </form>
   </div>
   <div class="content"></div>
+  <div class="noty"></div>
   <script th:inline="javascript">
+    $(function () {
+      var token = $("meta[name='_csrf']").attr("content");
+      var header = $("meta[name='_csrf_header']").attr("content");
+      $(document).ajaxSend(function(e, xhr, options) {
+        xhr.setRequestHeader(header, token);
+      });
+      update();
+    });
     elem = '.content'
+    timerid = null;
     $(elem).html("loading..");
     if([[${page}]]!=null){
-      $(elem).load([[${page}]],'lol=123');
-      History.pushState(null, document.title, [[${page}]]);
+      $(elem).load('../'+[[${page}]],'lol=123');
+      History.pushState(null, document.title, '../'+[[${page}]]);
     }
     else{
-      $(elem).load('tape','lol=123');
-      History.pushState(null, document.title, 'tape');
+      $(elem).load('../tape','lol=123');
+      History.pushState(null, document.title, '../tape');
     }
     function open_page(url){
       History.pushState(null, document.title, url);
@@ -41,6 +51,36 @@
       $(elem).html("loading..");
       $(elem).load(History.getState().url,'lol=123');
     });
+    function update() {
+      $.ajax({
+        url: "../update",
+        type: "POST",
+        success:function(response) {
+          console.log(response);
+          $('.noty').html('');
+          hr = window.location.href.toString().split('/');
+          if(hr[hr.length-1]==response){
+            open_page('../tape');
+            open_page('../'+response);
+          }
+          else if(hr[hr.length-1]=='dialog' && response=='letters'){
+            open_page('../tape');
+            open_page('../'+hr[hr.length-2]+'/'+hr[hr.length-1]);
+          }
+          if(response=='notify'){
+            $('.noty').html('У вас новое уведомление');
+          }
+          if(response=='letters'){
+            $('.noty').html('У вас новое сообщение');
+          }
+          setTimeout(() => update(), 3000);
+        },
+        error: function (request, status, error) {
+          console.log(request.responseText);
+        }
+      });
+    }
+
 
   </script>
 </body>

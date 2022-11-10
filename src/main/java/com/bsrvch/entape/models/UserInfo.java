@@ -3,7 +3,6 @@ package com.bsrvch.entape.models;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.persistence.*;
-import java.sql.Date;
 import java.util.*;
 
 @Entity

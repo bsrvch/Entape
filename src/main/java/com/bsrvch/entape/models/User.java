@@ -7,10 +7,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.bsrvch.entape.repository.FriendsRepository;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -33,34 +31,19 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user2", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
     private List<Friends> friends2 = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "users", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    private List<Rooms> rooms = new ArrayList<>();
+//    @ManyToMany(mappedBy = "users", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+//    private List<Room> rooms = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
+    private List<UserRoom> userRoom = new ArrayList<>();
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     private Set<Role> roles;
+
+    public User() {}
     public User(String username, String password) {
         this.username = username;
         this.password = password;
-    }
-
-    public User() {}
-    public void addNotify(Notify notify) {
-        notifies.add(notify);
-    }
-    public void removeNotify(Long id) {
-        for(Notify notify: notifies){
-            if(notify.getId()==id){
-                notifies.remove(notify);
-                break;
-            }
-        }
-    }
-    public void addFriends(Friends friend) {
-        friends1.add(friend);
-    }
-    public void removeFriends(Friends friend) {
-        friends1.remove(friend);
     }
     public boolean isActive() {return active;}
     public void setActive(boolean active) {this.active = active;}
@@ -78,11 +61,28 @@ public class User implements UserDetails {
     public void setUserName(String username) {this.username = username;}
     public UserInfo getUserInfo() {return userInfo;}
     public void setUserInfo(UserInfo userInfo) {this.userInfo = userInfo;}
+    public void addNotify(Notify notify) {
+        notifies.add(notify);
+    }
+    public void removeNotify(Long id) {
+        for(Notify notify: notifies){
+            if(notify.getId()==id){
+                notifies.remove(notify);
+                break;
+            }
+        }
+    }
     public void updateNotify(NotifyRepository notifyRepository){
         setNotify(notifyRepository.findAllByUser(this));
     }
     public List<Notify> getNotify() {return notifies;}
     public void setNotify(List<Notify> notifies) {this.notifies = notifies;}
+    public void addFriends(Friends friend) {
+        friends1.add(friend);
+    }
+    public void removeFriends(Friends friend) {
+        friends1.remove(friend);
+    }
     public void updateFriends(FriendsRepository friendsRepository){
         setFriends1(friendsRepository.findAllByUser1(this));
         setFriends2(friendsRepository.findAllByUser2(this));
@@ -97,15 +97,22 @@ public class User implements UserDetails {
     }
     public void setFriends1(List<Friends> friends) {this.friends1 = friends;}
     public void setFriends2(List<Friends> friends) {this.friends2 = friends;}
-    public void addRoom(Rooms room){
-        this.rooms.add(room);
+    public void addRoom(Room room){
+        UserRoom userRoom = new UserRoom(this,room);
+        this.userRoom.add(userRoom);
     }
-    public List<Rooms> getRooms() {
-        return rooms;
+    public List<Room> getRooms(){
+        return this.userRoom.stream().map(UserRoom::getRoom).collect(Collectors.toList());
+    }
+    public Room findRoomByUsers(List<User> users){
+        return this.getRooms().parallelStream().filter(room1 -> room1.getUserRoom().stream().map(UserRoom::getRoom).collect(Collectors.toList()).equals(users)).findFirst().orElse(new Room());
+    }
+    public List<UserRoom> getUserRoom() {
+        return userRoom;
     }
 
-    public void setRooms(List<Rooms> rooms) {
-        this.rooms = rooms;
+    public void setUserRoom(List<UserRoom> userRoom) {
+        this.userRoom = userRoom;
     }
 
     //    public void addMessage(Messages message){sentMessages.add(message);}

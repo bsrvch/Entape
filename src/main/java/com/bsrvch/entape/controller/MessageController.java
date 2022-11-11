@@ -1,9 +1,9 @@
 package com.bsrvch.entape.controller;
 
 import com.bsrvch.entape.models.Messages;
-import com.bsrvch.entape.models.Rooms;
+import com.bsrvch.entape.models.Room;
 import com.bsrvch.entape.models.User;
-import com.bsrvch.entape.repository.RoomsRepository;
+import com.bsrvch.entape.repository.RoomRepository;
 import com.bsrvch.entape.repository.UserInfoRepository;
 import com.bsrvch.entape.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,19 +26,21 @@ public class MessageController {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private RoomsRepository roomsRepository;
+    private RoomRepository roomRepository;
     @PostMapping(value = "/{login}/dialog", params = "send")
     public @ResponseBody String sendMessage(@RequestParam String send, @AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
-        List<User> userList = new ArrayList<>();
-        userList.add(user);
-        userList.add(userInfoRepository.findByLogin(login).getUser());
-        if(roomsRepository.findByUsersIn(userList)==null){
-            user.addRoom(new Rooms("dialog",userList));
-            userRepository.save(user);
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(userInfoRepository.findByLogin(login).getUser());
+        Room room = user.findRoomByUsers(users);
+        if(room.getName()==null){
+            System.out.println("dfghjk");
+            room = new Room("dialog",users);
+            roomRepository.save(room);
+
         }
-        Rooms room = roomsRepository.findByUsersIn(userList);
         room.addMessages(new Messages(user,send));
-        roomsRepository.save(room);
+        roomRepository.save(room);
         return "ok";
     }
 //    @PostMapping(value = "/{login}/dialog", params = "send")

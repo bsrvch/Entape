@@ -11,7 +11,7 @@ public class Messages {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
     @ManyToOne(fetch = FetchType.LAZY)
-    private Rooms room;
+    private Room room;
 
     public Messages() {
     }
@@ -35,6 +35,6 @@ public class Messages {
     public void setUser(User user) {
         this.user = user;
     }
-    public Rooms getRoom() {return room;}
-    public void setRoom(Rooms room) {this.room = room;}
+    public Room getRoom() {return room;}
+    public void setRoom(Room room) {this.room = room;}
 }

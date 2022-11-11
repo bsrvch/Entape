@@ -11,7 +11,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 @Controller
 public class MainController {
@@ -26,7 +26,7 @@ public class MainController {
     @Autowired
     private MessagesRepository messagesRepository;
     @Autowired
-    private RoomsRepository roomsRepository;
+    private RoomRepository roomRepository;
     @GetMapping("/")
     public String entapeMain(@AuthenticationPrincipal User user,Model model) {
         ResourceBundle s = ResourceBundle.getBundle("locale/auth",Locale.getDefault());
@@ -139,8 +139,9 @@ public class MainController {
         List<User> users = new ArrayList<>();
         users.add(user);
         users.add(userInfoRepository.findByLogin(login).getUser());
-        if(roomsRepository.findByUsersIn(users)!=null){
-            model.addAttribute("messages",roomsRepository.findByUsersIn(users).getMessages());
+        Room room = user.findRoomByUsers(users);
+        if(room.getMessages()!=null){
+            model.addAttribute("messages", room.getMessages());
         }
         UserInfo userInfo = userInfoRepository.findByLogin(login);
         model.addAttribute("userInfo1", userInfo);

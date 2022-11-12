@@ -1,12 +1,12 @@
 package com.bsrvch.entape.controller;
 
-import com.bsrvch.entape.models.Messages;
-import com.bsrvch.entape.models.Room;
-import com.bsrvch.entape.models.User;
+import com.bsrvch.entape.models.*;
 import com.bsrvch.entape.repository.RoomRepository;
 import com.bsrvch.entape.repository.UserInfoRepository;
 import com.bsrvch.entape.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -42,6 +44,12 @@ public class MessageController {
         room.addMessages(new Messages(user,send));
         roomRepository.save(room);
         return "ok";
+    }
+    @MessageMapping("/{login}/dialog")
+    @SendTo("/topic/{login}/dialog")
+    public OutputMessage send(String login, Message message) throws Exception {
+        String time = new SimpleDateFormat("HH:mm").format(new Date());
+        return new OutputMessage(message.getFrom(), message.getText(), time);
     }
 //    @PostMapping(value = "/{login}/dialog", params = "send")
 //    public @ResponseBody String sendMessage(@RequestParam String send, @AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){

@@ -16,35 +16,76 @@
     <form class="messageText">
       <textarea name="send"></textarea><button>Send</button>
     </form>
+    <div>
+      <div>
+        <input type="text" id="from" placeholder="Choose a nickname"/>
+      </div>
+      <br />
+      <div>
+        <button id="connect" onclick="connect();">Connect</button>
+        <button id="disconnect" disabled="disabled" onclick="disconnect();">
+          Disconnect
+        </button>
+      </div>
+      <br />
+      <div id="conversationDiv">
+        <input type="text" id="text" placeholder="Write a message..."/>
+        <button id="sendMessage" onclick="sendMessage();">Send</button>
+        <p id="response"></p>
+      </div>
+    </div>
 
   </div>
   <script th:inline="javascript">
-    $(function () {
-      var token = $("meta[name='_csrf']").attr("content");
-      var header = $("meta[name='_csrf_header']").attr("content");
-      $(document).ajaxSend(function(e, xhr, options) {
-        xhr.setRequestHeader(header, token);
-      });
-      update();
-    });
+    var stompClient = null;
+    user1 = [[${userInfo.getLogin()}]]
+    user2 = [[${userInfo1.getLogin()}]]
+    var users = [user1,user2]
+    users = users.sort()
+    var room = users[0]+'_to_'+users[1];
+    function setConnected(connected) {
+      document.getElementById('connect').disabled = connected;
+      document.getElementById('disconnect').disabled = !connected;
+      document.getElementById('conversationDiv').style.visibility
+              = connected ? 'visible' : 'hidden';
+      document.getElementById('response').innerHTML = '';
+    }
 
-    $(".messageText").submit(function(e) {
-      e.preventDefault();
-      form = $(this);
-      $.ajax({
-        type: "POST",
-        url: window.location.href.toString(),
-        data: form.serialize(),
-        success: function(data)
-        {
-         console.log('ok') ;
-        },
-        error: function (request, status, error) {
-          console.log(request.responseText);
-        }
+    function connect() {
+      var socket = new SockJS('/'+room+'/dialog');
+      stompClient = Stomp.over(socket);
+      stompClient.connect({}, function(frame) {
+        setConnected(true);
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/topic/'+room+'/dialog', function(messageOutput) {
+          showMessageOutput(JSON.parse(messageOutput.body));
+        });
       });
+    }
 
-    });
+    function disconnect() {
+      if(stompClient != null) {
+        stompClient.disconnect();
+      }
+      setConnected(false);
+      console.log("Disconnected");
+    }
+
+    function sendMessage() {
+      var from = [[${userInfo.getLogin()}]];
+      var text = document.getElementById('text').value;
+      stompClient.send("/app/"+room+"/dialog", {},
+              JSON.stringify({'from':from, 'text':text}));
+    }
+
+    function showMessageOutput(messageOutput) {
+      var response = document.getElementById('response');
+      var p = document.createElement('p');
+      p.style.wordWrap = 'break-word';
+      p.appendChild(document.createTextNode(messageOutput.from + ": "
+              + messageOutput.text + " (" + messageOutput.time + ")"));
+      response.appendChild(p);
+    }
   </script>
 
 </body>

@@ -16,9 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -29,26 +28,29 @@ public class MessageController {
     private UserRepository userRepository;
     @Autowired
     private RoomRepository roomRepository;
-    @PostMapping(value = "/{login}/dialog", params = "send")
-    public @ResponseBody String sendMessage(@RequestParam String send, @AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
-        List<User> users = new ArrayList<>();
-        users.add(user);
-        users.add(userInfoRepository.findByLogin(login).getUser());
-        Room room = user.findRoomByUsers(users);
-        if(room.getName()==null){
-            System.out.println("dfghjk");
-            room = new Room("dialog",users);
-            roomRepository.save(room);
-
-        }
-        room.addMessages(new Messages(user,send));
-        roomRepository.save(room);
-        return "ok";
-    }
+//    @PostMapping(value = "/{login}/dialog", params = "send")
+//    public @ResponseBody String sendMessage(@RequestParam String send, @AuthenticationPrincipal User user, @PathVariable(value = "login") String login, Model model){
+//        List<User> users = new ArrayList<>();
+//        users.add(user);
+//        users.add(userInfoRepository.findByLogin(login).getUser());
+//        Room room = user.findRoomByUsers(users);
+//        System.out.println(room.getName());
+//        if(room.getName()==null){
+//            System.out.println("dfghjk");
+//            room = new Room("dialog",users);
+//            roomRepository.save(room);
+//        }
+//        room.addMessages(new Messages(user,send));
+//        roomRepository.save(room);
+//        return "ok";
+//    }
     @MessageMapping("/{login}/dialog")
     @SendTo("/topic/{login}/dialog")
-    public OutputMessage send(String login, Message message) throws Exception {
+    public OutputMessage send(String login, @AuthenticationPrincipal User user, Message message) throws Exception {
         String time = new SimpleDateFormat("HH:mm").format(new Date());
+        Room room = roomRepository.findByName(message.getRoom());
+        room.addMessages(new Messages(userInfoRepository.findByLogin(message.getFrom()).getUser(),message.getText(),time));
+        roomRepository.save(room);
         return new OutputMessage(message.getFrom(), message.getText(), time);
     }
 //    @PostMapping(value = "/{login}/dialog", params = "send")

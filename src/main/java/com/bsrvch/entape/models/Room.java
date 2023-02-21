@@ -1,6 +1,7 @@
 package com.bsrvch.entape.models;
 
 import com.bsrvch.entape.repository.MessagesRepository;
+import com.bsrvch.entape.repository.UserRoomRepository;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -59,6 +60,9 @@ public class Room {
     }
     public void updateMessages(MessagesRepository messagesRepository){
         this.messages = messagesRepository.findAllByRoom(this);
+    }
+    public void updateUserRoom(UserRoomRepository userRoomRepository){
+        this.userRoom = userRoomRepository.findAllByRoom(this);
     }
     public List<Messages> getMessages() {
         return messages;

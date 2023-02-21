@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface RoomRepository extends CrudRepository<Room,Long> {
     Room findByUserRoomIn(List<UserRoom> users);
+    Room findByName(String name);
 }

@@ -2,89 +2,64 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>Title</title>
 </head>
 <body>
   <div class="users">
-    <h1 th:text="${userInfo1.getFirst_name()}+' '+${userInfo1.getSecond_name()}"></h1>
+    <h1 th:text="${roomName}"></h1>
     <p th:text="${userInfo.getFirst_name()}"></p>
 
-    <div class="messages" th:if="${messages!=null}"  th:each="el : ${messages}">
-      <p style="background-color: rgba(85,255,0,0.55)" th:if="${el.getUser().getUserInfo().getLogin()==userInfo.getLogin()}" th:text="${el.getText()}"></p>
-      <p style="background-color: rgba(255,0,0,0.55)" th:if="${el.getUser().getUserInfo().getLogin()==userInfo1.getLogin()}" th:text="${el.getText()}"></p>
-    </div>
-    <form class="messageText">
-      <textarea name="send"></textarea><button>Send</button>
-    </form>
+
     <div>
-      <div>
-        <input type="text" id="from" placeholder="Choose a nickname"/>
-      </div>
-      <br />
-      <div>
-        <button id="connect" onclick="connect();">Connect</button>
-        <button id="disconnect" disabled="disabled" onclick="disconnect();">
-          Disconnect
-        </button>
-      </div>
-      <br />
       <div id="conversationDiv">
         <input type="text" id="text" placeholder="Write a message..."/>
         <button id="sendMessage" onclick="sendMessage();">Send</button>
         <p id="response"></p>
       </div>
     </div>
-
+    <div class="messages" th:if="${messages!=null}"  th:each="el : ${messages}">
+      <p style="background-color: rgba(85,255,0,0.55)" th:if="${el.getUser().getUserInfo().getLogin()==userInfo.getLogin()}" th:text="${el.getText()}"></p>
+      <p style="background-color: rgba(255,0,0,0.55)" th:if="${el.getUser().getUserInfo().getLogin()==userInfo1.getLogin()}" th:text="${el.getText()}"></p>
+    </div>
   </div>
   <script th:inline="javascript">
     var stompClient = null;
-    user1 = [[${userInfo.getLogin()}]]
-    user2 = [[${userInfo1.getLogin()}]]
-    var users = [user1,user2]
+    var token = $("meta[name='_csrf']").attr("content");
+    var header = $("meta[name='_csrf_header']").attr("content");
+    var users = []
+    user0 = [[${userInfo.getLogin()}]]
+    users.push([[${room.getUserRoom()[0].getUser().getUserInfo.getLogin()}]])
+    users.push([[${room.getUserRoom()[1].getUser().getUserInfo.getLogin()}]])
     users = users.sort()
     var room = users[0]+'_to_'+users[1];
-    function setConnected(connected) {
-      document.getElementById('connect').disabled = connected;
-      document.getElementById('disconnect').disabled = !connected;
-      document.getElementById('conversationDiv').style.visibility
-              = connected ? 'visible' : 'hidden';
-      document.getElementById('response').innerHTML = '';
-    }
-
+    connect()
     function connect() {
       var socket = new SockJS('/'+room+'/dialog');
+      console.log(socket);
       stompClient = Stomp.over(socket);
-      stompClient.connect({}, function(frame) {
-        setConnected(true);
+      stompClient.connect({[header]:token}, function(frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/'+room+'/dialog', function(messageOutput) {
           showMessageOutput(JSON.parse(messageOutput.body));
         });
       });
     }
-
-    function disconnect() {
-      if(stompClient != null) {
-        stompClient.disconnect();
-      }
-      setConnected(false);
-      console.log("Disconnected");
-    }
-
     function sendMessage() {
-      var from = [[${userInfo.getLogin()}]];
       var text = document.getElementById('text').value;
       stompClient.send("/app/"+room+"/dialog", {},
-              JSON.stringify({'from':from, 'text':text}));
+              JSON.stringify({'from':user0, 'to':users[1],'room':room,'text':text}));
     }
-
     function showMessageOutput(messageOutput) {
       var response = document.getElementById('response');
-      var p = document.createElement('p');
-      p.style.wordWrap = 'break-word';
-      p.appendChild(document.createTextNode(messageOutput.from + ": "
-              + messageOutput.text + " (" + messageOutput.time + ")"));
-      response.appendChild(p);
+      mes = document.querySelector(".messages");
+      if(messageOutput.from==user0){
+        mes.innerHTML=mes.innerHTML+'<p style=\"background-color: rgba(85,255,0,0.55)\">'+messageOutput.text+'</p>'
+      }
+      else{
+        mes.innerHTML=mes.innerHTML+'<p style=\"background-color: rgba(255,0,0,0.55)\">'+messageOutput.text+'</p>'
+      }
     }
   </script>
 

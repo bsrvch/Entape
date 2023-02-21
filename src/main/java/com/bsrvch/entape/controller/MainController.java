@@ -27,6 +27,8 @@ public class MainController {
     private MessagesRepository messagesRepository;
     @Autowired
     private RoomRepository roomRepository;
+    @Autowired
+    private UserRoomRepository userRoomRepository;
     @GetMapping("/")
     public String entapeMain(@AuthenticationPrincipal User user,Model model) {
         ResourceBundle s = ResourceBundle.getBundle("locale/auth",Locale.getDefault());
@@ -139,12 +141,38 @@ public class MainController {
         List<User> users = new ArrayList<>();
         users.add(user);
         users.add(userInfoRepository.findByLogin(login).getUser());
-        Room room = user.findRoomByUsers(users);
+        List<String> sortUsers = new ArrayList<>();
+        sortUsers.add(users.get(0).getUserInfo().getLogin());
+        sortUsers.add(users.get(1).getUserInfo().getLogin());
+        Collections.sort(sortUsers);
+        String roomName = sortUsers.get(0)+"_to_"+sortUsers.get(1);
+        Room room =  roomRepository.findByName(roomName);//user.findRoomByUsers(roomName);
+        if(room==null){
+            System.out.println("dfghjk");
+            room = new Room(roomName,users);
+            roomRepository.save(room);
+        }
         if(room.getMessages()!=null){
-            model.addAttribute("messages", room.getMessages());
+            List<Messages> messages = new ArrayList<>();
+            messages = room.getMessages();
+            messages.sort(new Comparator<Messages>() {
+                              @Override
+                              public int compare(Messages lhs, Messages rhs) {
+                                  return Long.compare(lhs.getId(), rhs.getId());
+                              }
+                          }
+            );
+            model.addAttribute("messages", messages);
         }
         UserInfo userInfo = userInfoRepository.findByLogin(login);
         model.addAttribute("userInfo1", userInfo);
+        model.addAttribute("room", room);
+        if(room.getUserRoom().size()==2){
+            model.addAttribute("roomName", userInfo.getFirst_name()+userInfo.getSecond_name());
+        }
+        else{
+            model.addAttribute("roomName", room.getName());
+        }
         model.addAttribute("userInfo", user.getUserInfo());
         return "blocks/dialog";
     }

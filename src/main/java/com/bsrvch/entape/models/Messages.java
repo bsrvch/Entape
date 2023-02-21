@@ -8,6 +8,12 @@ public class Messages {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     private String text;
+    private String time;
+
+    public String getTime() {return time;}
+
+    public void setTime(String time) {this.time = time;}
+
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -15,9 +21,10 @@ public class Messages {
 
     public Messages() {
     }
-    public Messages(User user,String text) {
+    public Messages(User user,String text,String time) {
         this.text = text;
         this.user = user;
+        this.time = time;
     }
     public long getId() {
         return id;

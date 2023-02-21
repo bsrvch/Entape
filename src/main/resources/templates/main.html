@@ -39,20 +39,32 @@
     timerid = null;
     $(elem).html("loading..");
     if([[${page}]]!=null){
+      disconnect()
       $(elem).load('../'+[[${page}]],'lol=123');
       History.pushState(null, document.title, '../'+[[${page}]]);
     }
     else{
       $(elem).load('../tape','lol=123');
+      disconnect()
       History.pushState(null, document.title, '../tape');
     }
     function open_page(url){
+      disconnect()
       History.pushState(null, document.title, url);
     }
     History.Adapter.bind(window, 'statechange',function(e){
+      disconnect()
       $(elem).html("loading..");
       $(elem).load(History.getState().url,'lol=123');
     });
+    function disconnect() {
+      if(typeof stompClient !== 'undefined'){
+        if(stompClient != null) {
+          stompClient.disconnect();
+        }
+      }
+
+    }
     function update() {
       $.ajax({
         url: "../update",

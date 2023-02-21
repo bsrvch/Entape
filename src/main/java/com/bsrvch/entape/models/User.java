@@ -2,6 +2,8 @@ package com.bsrvch.entape.models;
 
 
 import com.bsrvch.entape.repository.NotifyRepository;
+import com.bsrvch.entape.repository.RoomRepository;
+import com.bsrvch.entape.repository.UserRoomRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.bsrvch.entape.repository.FriendsRepository;
@@ -104,8 +106,13 @@ public class User implements UserDetails {
     public List<Room> getRooms(){
         return this.userRoom.stream().map(UserRoom::getRoom).collect(Collectors.toList());
     }
-    public Room findRoomByUsers(List<User> users){
-        return this.getRooms().parallelStream().filter(room1 -> room1.getUserRoom().stream().map(UserRoom::getRoom).collect(Collectors.toList()).equals(users)).findFirst().orElse(new Room());
+    public void updateRooms(UserRoomRepository userRoomRepository){
+        setUserRoom(userRoomRepository.findAllByUser(this));
+    }
+    public Room findRoomByUsers(String name){
+        return this.getRooms().parallelStream().filter(room -> room.getName()==name).findFirst().orElse(null);
+        //return this.getRooms().parallelStream().forEach(room1 -> room1.getUserRoom().stream().filter(userRoom1 -> userRoom1.getUser().equals(users.get(1))).findFirst().orElse(null));
+        //return this.getRooms().parallelStream().filter(room1 -> room1.getUserRoom().stream().map(UserRoom::getRoom).collect(Collectors.toList()).equals(users)).findFirst().orElse(null);
     }
     public List<UserRoom> getUserRoom() {
         return userRoom;

@@ -1,1 +1,2 @@
-An attempt to write a social network (very dirty code)
+<h2>Entape</h2>
+Социальная сеть, проект заброшен в связи с переосмыслением бытия...
